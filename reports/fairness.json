@@ -1,0 +1,80 @@
+{
+  "shop": {
+    "metrics": {
+      "mall": {
+        "n": 712.0,
+        "base_rate": 0.2331,
+        "selection_rate": 0.7093,
+        "TPR": 0.8855,
+        "FPR": 0.6557,
+        "precision": 0.2911,
+        "pr_auc": 0.4109
+      },
+      "regular": {
+        "n": 941.0,
+        "base_rate": 0.1987,
+        "selection_rate": 0.7598,
+        "TPR": 0.893,
+        "FPR": 0.7268,
+        "precision": 0.2336,
+        "pr_auc": 0.5001
+      }
+    },
+    "gaps": {
+      "demographic_parity_diff": 0.05056030519767407,
+      "disparate_impact_ratio": 0.9334583955370471,
+      "equal_opportunity_diff": 0.007505959667547191,
+      "fpr_diff": 0.07111279525072634
+    }
+  },
+  "price_tier": {
+    "metrics": {
+      "high": {
+        "n": 549.0,
+        "base_rate": 0.2732,
+        "selection_rate": 0.7413,
+        "TPR": 0.8933,
+        "FPR": 0.6842,
+        "precision": 0.3292,
+        "pr_auc": 0.5422
+      },
+      "low": {
+        "n": 552.0,
+        "base_rate": 0.1449,
+        "selection_rate": 0.7264,
+        "TPR": 0.85,
+        "FPR": 0.7055,
+        "precision": 0.1696,
+        "pr_auc": 0.3913
+      },
+      "mid": {
+        "n": 552.0,
+        "base_rate": 0.2228,
+        "selection_rate": 0.7464,
+        "TPR": 0.9106,
+        "FPR": 0.6993,
+        "precision": 0.2718,
+        "pr_auc": 0.466
+      }
+    },
+    "gaps": {
+      "demographic_parity_diff": 0.019927536231884035,
+      "disparate_impact_ratio": 0.9733009708737864,
+      "equal_opportunity_diff": 0.06056910569105689,
+      "fpr_diff": 0.021297948260481703
+    }
+  },
+  "top10_exposure": {
+    "mall_share_population": 0.4307320024198427,
+    "mall_share_actual_surges": 0.4702549575070821,
+    "mall_share_top10": 0.28823529411764703,
+    "precision_at_10_mall": 0.5714285714285714,
+    "precision_at_10_regular": 0.5867768595041323
+  },
+  "mitigation_rerank": {
+    "mall_share_top10_before": 0.28823529411764703,
+    "mall_share_top10_after": 0.40588235294117647,
+    "precision_at_10_before": 0.5823529411764706,
+    "precision_at_10_after": 0.5705882352941177
+  }
+}

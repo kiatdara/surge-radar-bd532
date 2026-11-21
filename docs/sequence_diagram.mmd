@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor C as Creator
+    participant UI as Web dashboard
+    participant API as FastAPI service
+    participant F as Feature builder
+    participant M as Random forest + SHAP
+    participant S as Feedback store
+    UI->>API: GET /api/v1/health (every 5 s)
+    API-->>UI: 200 {status: ok, model_version}
+    C->>UI: pick product, Load 45-day history
+    UI->>API: GET /api/v1/samples/{id}
+    API-->>UI: 200 request body
+    C->>UI: Predict
+    UI->>API: POST /api/v1/predict (JSON)
+    alt invalid body or too little history
+        API-->>UI: 400 / 415 / 422 {error}
+        UI-->>C: show code + message
+    else model not loaded
+        API-->>UI: 503 MODEL_NOT_READY + Retry-After
+    else valid
+        API->>F: features_for_single_product(history, product)
+        F-->>API: 1 row, 28 features
+        API->>M: predict_proba + TreeExplainer
+        M-->>API: probability, SHAP values
+        API-->>UI: 200 {prediction, reasons, latency_ms}
+        UI-->>C: label, probability bar, reasons
+    end
+    C->>UI: Useful / Not useful / It did not surge
+    UI->>API: POST /api/v1/feedback
+    API->>S: append JSON line
+    API-->>UI: 201 {feedback_id}

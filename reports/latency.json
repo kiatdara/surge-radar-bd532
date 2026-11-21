@@ -1,0 +1,17 @@
+{
+  "predict_with_explanation": {
+    "n": 200,
+    "round_trip_p50_ms": 68.2,
+    "round_trip_p95_ms": 97.4,
+    "server_p50_ms": 64.2,
+    "server_p95_ms": 92.8
+  },
+  "predict_no_explanation": {
+    "n": 200,
+    "round_trip_p50_ms": 57.7,
+    "round_trip_p95_ms": 79.8,
+    "server_p50_ms": 53.7,
+    "server_p95_ms": 75.1
+  },
+  "top10_mean_ms": 146.8
+}

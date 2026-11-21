@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+mlruns/
+mlflow.db
+data/feedback/
+*.pyc
+.DS_Store
+
+# Paid EchoTik API data and everything derived row-by-row from it stay private
+data/raw/*.csv
+data/processed/
+models/*.joblib

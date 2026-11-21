@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surge Radar · TikTok Shop TH</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#18181b; --mute:#6b7280; --line:#e5e7eb;
+          --hot:#dc2626; --watch:#d97706; --skip:#9ca3af; --accent:#2563eb; --ok:#16a34a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.45 -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+         background:var(--bg); color:var(--ink); }
+  header { display:flex; align-items:center; gap:16px; padding:14px 24px; background:#111827;
+           color:#fff; }
+  header h1 { font-size:18px; margin:0; letter-spacing:.2px; }
+  header .sub { color:#9ca3af; font-size:12px; }
+  #health { margin-left:auto; font-size:12px; display:flex; align-items:center; gap:6px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--skip); display:inline-block; }
+  main { display:grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap:20px;
+         padding:20px 24px; max-width:1400px; margin:auto; align-items:start; }
+  @media (max-width: 980px) { main { grid-template-columns:1fr; } }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  h2 { font-size:15px; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px; }
+  label { font-size:12px; color:var(--mute); display:flex; gap:6px; align-items:center; }
+  select, input[type=number] { padding:5px 7px; border:1px solid var(--line); border-radius:6px;
+         background:#fff; font:inherit; }
+  button { font:inherit; border:1px solid var(--line); background:#fff; border-radius:6px;
+           padding:6px 10px; cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button:disabled { opacity:.5; cursor:default; }
+  .item { border-top:1px solid var(--line); padding:12px 0; display:grid;
+          grid-template-columns: 34px minmax(0,1fr) 150px; gap:12px; }
+  .rank { font-size:20px; font-weight:700; color:var(--mute); text-align:center; }
+  .name { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta { color:var(--mute); font-size:12px; }
+  .chip { display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase;
+          padding:2px 7px; border-radius:999px; color:#fff; margin-right:6px; }
+  .chip.hot { background:var(--hot); } .chip.watch { background:var(--watch); }
+  .chip.skip { background:var(--skip); }
+  .bar { height:8px; background:#eef2ff; border-radius:4px; overflow:hidden; margin:4px 0; }
+  .bar > span { display:block; height:100%; background:var(--accent); }
+  .prob { font-size:22px; font-weight:700; }
+  ul.reasons { margin:6px 0 0; padding-left:0; list-style:none; font-size:12.5px; }
+  ul.reasons li::before { content:attr(data-arrow); display:inline-block; width:16px; font-weight:700; }
+  li.up::before { color:var(--ok); } li.down::before { color:var(--hot); }
+  .fb { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .fb button { font-size:12px; padding:3px 8px; }
+  .fb .done { color:var(--ok); font-size:12px; }
+  textarea { width:100%; height:240px; font:12px/1.4 ui-monospace, Menlo, monospace;
+             border:1px solid var(--line); border-radius:6px; padding:8px; }
+  pre { background:#0b1020; color:#e5e7eb; padding:10px; border-radius:6px; font-size:12px;
+        max-height:330px; overflow:auto; white-space:pre-wrap; }
+  .err { color:var(--hot); font-weight:600; }
+  .legend { font-size:12px; color:var(--mute); margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Surge Radar</h1>
+    <div class="sub">Which TikTok Shop products will sell ≥20% more next week? · Thailand · data: EchoTik</div>
+  </div>
+  <div id="health"><span class="dot" id="hdot"></span><span id="htext">checking model…</span></div>
+</header>
+
+<main>
+  <section>
+    <h2>Today's top products to promote</h2>
+    <div class="controls">
+      <label>Show <input id="k" type="number" min="1" max="50" value="10" style="width:56px"></label>
+      <label>Category <select id="cat"><option value="">all</option></select></label>
+      <label>Shop <select id="shop"><option value="">all</option><option value="0">regular</option><option value="1">Mall</option></select></label>
+      <label><input id="fair" type="checkbox"> fair exposure (reserve slots per shop type)</label>
+      <label>Language <select id="lang"><option value="en">English</option><option value="th">ไทย</option></select></label>
+      <button class="primary" id="refresh">Refresh</button>
+    </div>
+    <div id="asof" class="meta"></div>
+    <div id="list"></div>
+    <div class="legend"><span class="chip hot">hot</span> p ≥ 0.55 — promote now ·
+      <span class="chip watch">watch</span> p ≥ model threshold — check tomorrow ·
+      <span class="chip skip">skip</span> no action. Arrows show the top SHAP reasons.</div>
+  </section>
+
+  <section>
+    <h2>Check one product (POST /api/v1/predict)</h2>
+    <div class="controls">
+      <label>Product <select id="pick" style="max-width:260px"></select></label>
+      <button id="load">Load 45-day history</button>
+      <button class="primary" id="send" disabled>Predict</button>
+    </div>
+    <div class="meta">The request body is editable — try deleting days or setting a rating of 9 to see the error handling.</div>
+    <textarea id="body" spellcheck="false" placeholder="request JSON appears here"></textarea>
+    <div id="status" class="meta" style="margin:8px 0"></div>
+    <pre id="out">response appears here</pre>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = (path, opt) => fetch(path, opt).then(async r => ({ status: r.status, body: await r.json() }));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function health() {
+  try {
+    const { body } = await api("/api/v1/health");
+    const ok = body.status === "ok";
+    $("hdot").style.background = ok ? "var(--ok)" : "var(--hot)";
+    $("htext").textContent = ok ? `${body.model_version} · ${body.model_name} · trained to ${body.trained_until}`
+                                : "Model unavailable — predictions paused";
+  } catch { $("hdot").style.background = "var(--hot)"; $("htext").textContent = "API unreachable"; }
+}
+
+async function loadTop() {
+  const q = new URLSearchParams({ k: $("k").value, lang: $("lang").value, fair: $("fair").checked });
+  if ($("cat").value) q.set("category", $("cat").value);
+  if ($("shop").value) q.set("shop_type", $("shop").value);
+  $("list").innerHTML = '<div class="meta">loading…</div>';
+  const { status, body } = await api("/api/v1/products/top?" + q);
+  if (status !== 200) { $("list").innerHTML = `<div class="err">${status} ${esc(body.error?.code)}: ${esc(body.error?.message)}</div>`; return; }
+  $("asof").textContent = `Data as of ${body.as_of} · prediction window: next 7 days`;
+  $("list").innerHTML = body.items.map((it, i) => `
+    <div class="item">
+      <div class="rank">${i + 1}</div>
+      <div>
+        <div class="name" title="${esc(it.product_name)}"><span class="chip ${it.label}">${it.label}</span>${esc(it.product_name || it.product_id)}</div>
+        <div class="meta">id ${esc(it.product_id)} · now ≈ ${Math.round(it.current_sales_per_day || 0).toLocaleString()} units/day · ${esc(it.recommended_action)}</div>
+        <ul class="reasons">${it.reasons.map(r => `<li class="${r.direction}" data-arrow="${r.direction === "up" ? "↑" : "↓"}">${esc(r.text)}</li>`).join("")}</ul>
+        <div class="fb" data-pid="${esc(it.product_id)}" data-date="${it.as_of}">
+          <button data-l="useful">👍 Useful</button><button data-l="not_useful">👎 Not useful</button>
+          <button data-l="wrong_surge">It did not surge</button>
+        </div>
+      </div>
+      <div><div class="prob">${(it.surge_probability * 100).toFixed(0)}%</div>
+        <div class="bar"><span style="width:${it.surge_probability * 100}%"></span></div>
+        <div class="meta">chance of a ≥1.2× week</div></div>
+    </div>`).join("");
+}
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest(".fb button"); if (!b) return;
+  const box = b.parentElement;
+  const { status, body } = await api("/api/v1/feedback", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ product_id: box.dataset.pid, prediction_date: box.dataset.date, label: b.dataset.l, source: "dashboard" }) });
+  box.innerHTML = status === 201 ? `<span class="done">Thanks — recorded (${esc(body.feedback_id)})</span>` : `<span class="err">${esc(body.error?.message)}</span>`;
+});
+
+async function fillPickers() {
+  const { body } = await api("/api/v1/products/top?k=50");
+  if (!body.items) return;
+  $("pick").innerHTML = body.items.map(it => `<option value="${esc(it.product_id)}">${esc((it.product_name || it.product_id).slice(0, 45))}</option>`).join("");
+}
+
+$("load").onclick = async () => {
+  const { status, body } = await api(`/api/v1/samples/${$("pick").value}`);
+  $("body").value = JSON.stringify(body, null, 2); $("send").disabled = status !== 200;
+  $("status").textContent = status === 200 ? `${body.history.length} days loaded` : `${status} ${body.error?.code}`;
+};
+$("send").onclick = async () => {
+  let payload; try { payload = $("body").value; JSON.parse(payload); } catch { /* send as-is to show 400 */ }
+  const t0 = performance.now();
+  const r = await fetch("/api/v1/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+  const body = await r.json(); const ms = (performance.now() - t0).toFixed(0);
+  $("status").innerHTML = r.ok ? `HTTP ${r.status} · round trip ${ms} ms · server ${body.latency_ms.total} ms`
+                               : `<span class="err">HTTP ${r.status} ${esc(body.error.code)}</span> — ${esc(body.error.message)}`;
+  $("out").textContent = JSON.stringify(body, null, 2);
+};
+
+["refresh"].forEach(id => $(id).onclick = loadTop);
+["lang", "fair", "cat", "shop"].forEach(id => $(id).onchange = loadTop);
+const CATS = { "601450": "Beauty & personal care", "600001": "Home supplies", "700437": "Food & beverages",
+               "601152": "Womenswear & underwear", "601739": "Phones & electronics", "700645": "Health", "other": "Other" };
+$("cat").innerHTML += Object.entries(CATS).map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
+health(); setInterval(health, 5000); loadTop(); fillPickers();
+</script>
+</body>
+</html>

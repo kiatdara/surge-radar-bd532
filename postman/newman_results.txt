@@ -1,0 +1,89 @@
+newman
+
+Surge Radar API – BD532 term project
+
+→ 01 Health check
+  GET http://localhost:8000/api/v1/health [200 OK, 286B, 25ms]
+  ✓  200 OK
+  ✓  model ready
+
+→ 02 Top-10 products (ranked)
+  GET http://localhost:8000/api/v1/products/top?k=10 [200 OK, 9.66kB, 189ms]
+  ✓  200 OK
+  ✓  10 items
+  ✓  sorted by probability
+  ✓  3 reasons each
+
+→ 03 Top-10 with fair exposure re-ranking
+  GET http://localhost:8000/api/v1/products/top?k=10&fair=true [200 OK, 9.75kB, 152ms]
+  ✓  200 OK
+  ✓  fair flag echoed
+
+→ 04 Build sample request from stored history
+  GET http://localhost:8000/api/v1/samples/1736393107838698574 [200 OK, 6.29kB, 7ms]
+  ✓  200 OK
+  ✓  45 days of history
+
+→ 05 Scenario 1 – predict a real product (200)
+  POST http://localhost:8000/api/v1/predict [200 OK, 1.15kB, 90ms]
+  ✓  200 OK
+  ✓  request_id echoed
+  ✓  probability in [0,1]
+  ✓  label valid
+  ✓  server latency < 500 ms
+
+→ 06 Scenario 1b – Thai explanations
+  POST http://localhost:8000/api/v1/predict [200 OK, 1.45kB, 67ms]
+  ✓  Thai reason text
+
+→ 07 Scenario 2 – value out of range (422)
+  POST http://localhost:8000/api/v1/predict [422 Unprocessable Content, 357B, 3ms]
+  ✓  422
+  ✓  INVALID_VALUE on product.product_rating
+
+→ 08 Scenario 2b – missing required field (400)
+  POST http://localhost:8000/api/v1/predict [400 Bad Request, 292B, 5ms]
+  ✓  400
+  ✓  MISSING_FIELD
+
+→ 09 Scenario 3 – not enough history (422)
+  POST http://localhost:8000/api/v1/predict [422 Unprocessable Content, 350B, 4ms]
+  ✓  422
+  ✓  INSUFFICIENT_HISTORY
+
+→ 10 Malformed JSON (400)
+  POST http://localhost:8000/api/v1/predict [400 Bad Request, 251B, 3ms]
+  ✓  400 INVALID_JSON
+
+→ 11 Wrong Content-Type (415)
+  POST http://localhost:8000/api/v1/predict [415 Unsupported Media Type, 287B, 2ms]
+  ✓  415
+
+→ 12 Unknown product (404)
+  GET http://localhost:8000/api/v1/products/999/prediction [404 Not Found, 262B, 3ms]
+  ✓  404 PRODUCT_NOT_FOUND
+
+→ 13 Send feedback (201)
+  POST http://localhost:8000/api/v1/feedback [201 Created, 179B, 3ms]
+  ✓  201 Created
+  ✓  recorded
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                13 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                13 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 5 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                27 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 780ms                                      │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 28.82kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 42ms [min: 2ms, max: 189ms, s.d.: 61ms] │
+└────────────────────────────────────────────────────────────────┘

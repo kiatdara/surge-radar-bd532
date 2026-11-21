@@ -1,0 +1,97 @@
+{
+  "selected": "v2_random_forest",
+  "threshold": 0.4,
+  "model_version": "surge-1.0.0",
+  "test": {
+    "roc_auc": 0.6986925256047068,
+    "pr_auc": 0.4529848248667074,
+    "f1": 0.39923712650985377,
+    "precision": 0.2573770491803279,
+    "recall": 0.8895184135977338,
+    "precision_at_10": 0.5823529411764706,
+    "base_rate": 0.21355111917725347
+  },
+  "rule_test": {
+    "roc_auc": 0.5613183700152539,
+    "pr_auc": 0.23923064647523457,
+    "f1": 0.34434434434434436,
+    "precision": 0.26625386996904027,
+    "recall": 0.48725212464589235,
+    "precision_at_10": 0.3235294117647059,
+    "base_rate": 0.21355111917725347
+  },
+  "validation": {
+    "v0_rule_momentum": {
+      "roc_auc": 0.5865,
+      "pr_auc": 0.3601,
+      "f1": 0.4542,
+      "precision": 0.4052,
+      "recall": 0.5166,
+      "precision_at_10": 0.52,
+      "base_rate": 0.3119,
+      "cv_auc_mean": NaN,
+      "cv_auc_std": NaN,
+      "threshold": 0.5
+    },
+    "v1_logreg": {
+      "roc_auc": 0.8021,
+      "pr_auc": 0.6171,
+      "f1": 0.6327,
+      "precision": 0.521,
+      "recall": 0.8056,
+      "precision_at_10": 0.645,
+      "base_rate": 0.3119,
+      "cv_auc_mean": 0.7237,
+      "cv_auc_std": 0.0727,
+      "threshold": 0.37
+    },
+    "v2_random_forest": {
+      "roc_auc": 0.8282,
+      "pr_auc": 0.6463,
+      "f1": 0.6515,
+      "precision": 0.5376,
+      "recall": 0.8266,
+      "precision_at_10": 0.68,
+      "base_rate": 0.3119,
+      "cv_auc_mean": 0.7331,
+      "cv_auc_std": 0.0619,
+      "threshold": 0.4
+    },
+    "v3_xgboost": {
+      "roc_auc": 0.8002,
+      "pr_auc": 0.5932,
+      "f1": 0.6291,
+      "precision": 0.5139,
+      "recall": 0.8109,
+      "precision_at_10": 0.67,
+      "base_rate": 0.3119,
+      "cv_auc_mean": 0.71,
+      "cv_auc_std": 0.1037,
+      "threshold": 0.26
+    },
+    "v4_lightgbm": {
+      "roc_auc": 0.796,
+      "pr_auc": 0.5862,
+      "f1": 0.6253,
+      "precision": 0.5457,
+      "recall": 0.732,
+      "precision_at_10": 0.64,
+      "base_rate": 0.3119,
+      "cv_auc_mean": 0.7178,
+      "cv_auc_std": 0.109,
+      "threshold": 0.27
+    },
+    "v5_xgboost_no_calendar": {
+      "roc_auc": 0.7749,
+      "pr_auc": 0.5826,
+      "f1": 0.5956,
+      "precision": 0.4719,
+      "recall": 0.8074,
+      "precision_at_10": 0.64,
+      "base_rate": 0.3119,
+      "cv_auc_mean": 0.7105,
+      "cv_auc_std": 0.0721,
+      "threshold": 0.21
+    }
+  }
+}

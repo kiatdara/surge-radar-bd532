@@ -1,0 +1,581 @@
+{
+  "info": {
+    "name": "Surge Radar API – BD532 term project",
+    "description": "Interface tests for the TikTok Shop sales-surge API. Run requests in order (04 stores the sample body used by 05–09). CLI: newman run postman/surge_radar.postman_collection.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "product_id",
+      "value": ""
+    },
+    {
+      "key": "sample",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "health"
+          ]
+        },
+        "description": "UI polls this every 5 s."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('model ready', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Top-10 products (ranked)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products/top?k=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "products",
+            "top"
+          ],
+          "query": [
+            {
+              "key": "k",
+              "value": "10"
+            }
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('10 items', () => pm.expect(j.items.length).to.eql(10));",
+              "const p = j.items.map(x => x.surge_probability);",
+              "pm.test('sorted by probability', () => pm.expect(p).to.eql([...p].sort((a,b)=>b-a)));",
+              "pm.test('3 reasons each', () => j.items.forEach(x => pm.expect(x.reasons.length).to.eql(3)));",
+              "pm.collectionVariables.set('product_id', j.items[0].product_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Top-10 with fair exposure re-ranking",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products/top?k=10&fair=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "products",
+            "top"
+          ],
+          "query": [
+            {
+              "key": "k",
+              "value": "10"
+            },
+            {
+              "key": "fair",
+              "value": "true"
+            }
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('fair flag echoed', () => pm.expect(j.fair_rerank).to.be.true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Build sample request from stored history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/samples/{{product_id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "samples",
+            "{{product_id}}"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('45 days of history', () => pm.expect(pm.response.json().history.length).to.be.within(28,45));",
+              "pm.collectionVariables.set('sample', pm.response.text());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Scenario 1 – predict a real product (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{{body}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = JSON.parse(pm.collectionVariables.get('sample'));",
+              "",
+              "pm.variables.set('body', JSON.stringify(b));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('request_id echoed', () => pm.expect(j.request_id).to.eql(JSON.parse(pm.collectionVariables.get('sample')).request_id));",
+              "pm.test('probability in [0,1]', () => pm.expect(j.prediction.surge_probability).to.be.within(0,1));",
+              "pm.test('label valid', () => pm.expect(['hot','watch','skip']).to.include(j.prediction.label));",
+              "pm.test('server latency < 500 ms', () => pm.expect(j.latency_ms.total).to.be.below(500));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Scenario 1b – Thai explanations",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{{body}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = JSON.parse(pm.collectionVariables.get('sample'));",
+              "b.options.language = 'th';",
+              "pm.variables.set('body', JSON.stringify(b));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Thai reason text', () => pm.expect(pm.response.json().prediction.reasons[0].text).to.include('โอกาส'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Scenario 2 – value out of range (422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{{body}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = JSON.parse(pm.collectionVariables.get('sample'));",
+              "b.product.product_rating = 9;",
+              "pm.variables.set('body', JSON.stringify(b));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('422', () => pm.response.to.have.status(422));",
+              "pm.test('INVALID_VALUE on product.product_rating', () => { const e = pm.response.json().error; pm.expect(e.code).to.eql('INVALID_VALUE'); pm.expect(e.field).to.eql('product.product_rating'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Scenario 2b – missing required field (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{{body}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = JSON.parse(pm.collectionVariables.get('sample'));",
+              "delete b.product;",
+              "pm.variables.set('body', JSON.stringify(b));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('MISSING_FIELD', () => pm.expect(pm.response.json().error.code).to.eql('MISSING_FIELD'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Scenario 3 – not enough history (422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{{body}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = JSON.parse(pm.collectionVariables.get('sample'));",
+              "b.history = b.history.slice(-10);",
+              "pm.variables.set('body', JSON.stringify(b));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('422', () => pm.response.to.have.status(422));",
+              "pm.test('INSUFFICIENT_HISTORY', () => pm.expect(pm.response.json().error.code).to.eql('INSUFFICIENT_HISTORY'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Malformed JSON (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"request_id\": \"x\", "
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 INVALID_JSON', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().error.code).to.eql('INVALID_JSON'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Wrong Content-Type (415)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "predict"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "hello"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('415', () => pm.response.to.have.status(415));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Unknown product (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products/999/prediction",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "products",
+            "999",
+            "prediction"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 PRODUCT_NOT_FOUND', () => { pm.response.to.have.status(404); pm.expect(pm.response.json().error.code).to.eql('PRODUCT_NOT_FOUND'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Send feedback (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/feedback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "feedback"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"prediction_date\": \"2026-09-16\",\n  \"label\": \"useful\",\n  \"source\": \"api\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "pm.test('recorded', () => pm.expect(pm.response.json().status).to.eql('recorded'));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
